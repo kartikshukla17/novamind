@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogniKeep</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 4.5a2.5 2.5 0 0 0-4.96-.46 2.5 2.5 0 0 0-1.98 3 2.5 2.5 0 0 0-1.32 4.24 3 3 0 0 0 .34 5.58 2.5 2.5 0 0 0 2.96 3.08 2.5 2.5 0 0 0 4.91.05L12 20V4.5Z"/>
+          <path d="M16 8V5c0-1.1.9-2 2-2"/>
+          <path d="M12 13h4"/>
+          <path d="M12 18h6a2 2 0 0 1 2 2v1"/>
+          <path d="M12 8h8"/>
+        </svg>
+        <span>CogniKeep</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- Not logged in state -->
+      <div id="login-prompt" class="hidden">
+        <div class="connect-section">
+          <p>Connect your CogniKeep account to start saving.</p>
+          <button id="connect-btn" class="btn btn-primary">
+            Connect Account
+          </button>
+        </div>
+      </div>
+
+      <!-- Logged in state -->
+      <div id="save-form" class="hidden">
+        <div class="connected-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          <span>Connected</span>
+        </div>
+
+        <div class="current-page" id="current-page">
+          <div class="page-info">
+            <strong id="page-title">Loading...</strong>
+            <span id="page-url" class="url"></span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="item-type">Type</label>
+          <select id="item-type">
+            <option value="link">Link (Current Page)</option>
+            <option value="text">Text Note</option>
+            <option value="screenshot">Screenshot (Current Page)</option>
+          </select>
+        </div>
+
+        <div id="text-input-group" class="input-group hidden">
+          <label for="text-content">Content</label>
+          <textarea id="text-content" placeholder="Enter your note..."></textarea>
+        </div>
+
+        <div class="input-group">
+          <label for="item-title">Title (optional)</label>
+          <input type="text" id="item-title" placeholder="Custom title...">
+        </div>
+
+        <button id="save-btn" class="btn btn-primary">
+          <span class="btn-text">Save to CogniKeep</span>
+          <span class="btn-loading hidden">Saving...</span>
+        </button>
+
+        <div id="message" class="message hidden"></div>
+      </div>
+    </main>
+
+    <footer>
+      <a href="http://localhost:3000/all" target="_blank">Open CogniKeep</a>
+      <span>•</span>
+      <a href="http://localhost:3000/settings" target="_blank">Settings</a>
+      <span class="hidden" id="disconnect-separator">•</span>
+      <a href="#" id="disconnect-link" class="hidden">Disconnect</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

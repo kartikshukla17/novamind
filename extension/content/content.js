@@ -1,0 +1,35 @@
+// CogniKeep Content Script
+// Listens for auth token from the connect page
+
+// Listen for messages from the page
+window.addEventListener('message', async (event) => {
+  // Only accept messages from the same origin
+  if (event.origin !== 'http://localhost:3000') return
+
+  if (event.data.type === 'COGNIKEEP_AUTH_TOKEN' && event.data.token) {
+    // Store the token in extension storage
+    await chrome.storage.local.set({ authToken: event.data.token })
+    console.log('CogniKeep: Auth token received and stored')
+
+    // Notify the page that we received it
+    window.postMessage({ type: 'COGNIKEEP_AUTH_CONFIRMED' }, '*')
+  }
+})
+
+// Also check localStorage for token (fallback)
+if (window.location.pathname === '/extension/connect') {
+  const checkToken = setInterval(async () => {
+    const token = localStorage.getItem('cognikeep_extension_token')
+    if (token) {
+      await chrome.storage.local.set({ authToken: token })
+      console.log('CogniKeep: Auth token stored from localStorage')
+      clearInterval(checkToken)
+
+      // Clean up
+      localStorage.removeItem('cognikeep_extension_token')
+    }
+  }, 500)
+
+  // Stop checking after 30 seconds
+  setTimeout(() => clearInterval(checkToken), 30000)
+}
