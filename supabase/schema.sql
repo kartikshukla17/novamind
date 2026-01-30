@@ -1,4 +1,4 @@
--- CogniKeep Database Schema
+-- Novamind Database Schema
 -- Run this in your Supabase SQL Editor
 
 -- Items table (core content)

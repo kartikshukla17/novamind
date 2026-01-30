@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 /**
  * Handle content shared via Web Share Target API
- * This endpoint receives content when users share from other apps to CogniKeep
+ * This endpoint receives content when users share from other apps to Novamind
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient()

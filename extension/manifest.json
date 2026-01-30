@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "CogniKeep",
+  "name": "Novamind",
   "description": "Save anything to your second brain",
   "version": "1.0.0",
   "permissions": [
@@ -12,7 +12,7 @@
   ],
   "host_permissions": [
     "http://localhost:3000/*",
-    "https://*.cognikeep.com/*"
+    "https://*.novamind.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
@@ -44,19 +44,19 @@
     "128": "icons/icon128.png"
   },
   "commands": {
-    "save-to-cognikeep": {
+    "save-to-novamind": {
       "suggested_key": {
         "default": "Ctrl+Shift+K",
         "mac": "Command+Shift+K"
       },
-      "description": "Save current page to CogniKeep"
+      "description": "Save current page to Novamind"
     },
     "capture-screenshot": {
       "suggested_key": {
         "default": "Ctrl+Shift+S",
         "mac": "Command+Shift+S"
       },
-      "description": "Capture page screenshot to CogniKeep"
+      "description": "Capture page screenshot to Novamind"
     }
   }
 }

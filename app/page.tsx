@@ -17,7 +17,9 @@ import {
   FileText,
   Link2,
   Lightbulb,
-  Shield
+  Shield,
+  Check,
+  CreditCard
 } from 'lucide-react'
 
 export default function HomePage() {
@@ -49,12 +51,13 @@ export default function HomePage() {
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent-400 rounded-full animate-pulse-soft" />
             </div>
-            <span className="text-xl font-bold text-warm-900">CogniKeep</span>
+            <span className="text-xl font-bold text-warm-900">Novamind</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="nav-link text-sm font-medium">Features</a>
             <a href="#how-it-works" className="nav-link text-sm font-medium">How it works</a>
+            <a href="#pricing" className="nav-link text-sm font-medium">Pricing</a>
             <a href="#privacy" className="nav-link text-sm font-medium">Privacy</a>
           </div>
 
@@ -280,13 +283,104 @@ export default function HomePage() {
             Your thoughts stay private
           </h2>
           <p className="text-xl text-warm-400 max-w-2xl mx-auto mb-10">
-            Unlike other AI tools, CogniKeep processes everything locally in your browser.
+            Unlike other AI tools, Novamind processes everything locally in your browser.
             Your ideas, bookmarks, and notes never leave your device. No servers. No data mining. Just you and your second brain.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <PrivacyBadge icon={<Lock className="h-4 w-4" />} text="End-to-end encrypted" />
             <PrivacyBadge icon={<Zap className="h-4 w-4" />} text="On-device AI" />
             <PrivacyBadge icon={<Shield className="h-4 w-4" />} text="No data selling" />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-display-md font-bold text-warm-900 mb-4">
+              Simple, transparent pricing
+            </h2>
+            <p className="text-lg text-warm-600 max-w-xl mx-auto">
+              Start free, upgrade when you need more. No hidden fees, cancel anytime.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {/* Free Tier Card */}
+            <div className="bg-white rounded-2xl border-2 border-warm-200 p-8 flex flex-col">
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-warm-900 mb-2">Free</h3>
+                <p className="text-warm-500 text-sm">Perfect for getting started</p>
+              </div>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-warm-900">₹0</span>
+                  <span className="text-warm-500 text-sm">/forever</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                <PricingFeature text="Up to 50 items" />
+                <PricingFeature text="Basic AI categorization" />
+                <PricingFeature text="1 custom board" />
+                <PricingFeature text="Web app access" />
+              </ul>
+              <Link
+                href="/signup"
+                className="w-full py-3 px-6 bg-warm-900 hover:bg-warm-800 text-warm-50 font-medium rounded-xl text-center transition-all active:scale-[0.98]"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            {/* Pro Tier Card */}
+            <div className="relative bg-white rounded-2xl border-2 border-primary-500 p-8 flex flex-col shadow-glow">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="bg-primary-500 text-white text-sm font-medium px-4 py-1 rounded-full">
+                  Most Popular
+                </span>
+              </div>
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-warm-900 mb-2">Pro</h3>
+                <p className="text-warm-500 text-sm">For power users who want it all</p>
+              </div>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm text-warm-500">₹</span>
+                  <span className="text-4xl font-bold text-warm-900">749</span>
+                  <span className="text-warm-500 text-sm">/month</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                <PricingFeature text="Unlimited items" />
+                <PricingFeature text="Advanced AI categorization" />
+                <PricingFeature text="Unlimited boards" />
+                <PricingFeature text="Browser extension" />
+                <PricingFeature text="Priority support" />
+                <PricingFeature text="Export your data" />
+              </ul>
+              <Link
+                href="/signup"
+                className="w-full py-3 px-6 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl text-center transition-all shadow-glow hover:shadow-lg active:scale-[0.98]"
+              >
+                Start Free Trial
+              </Link>
+            </div>
+          </div>
+
+          {/* Payment badges */}
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-warm-400">
+            <div className="flex items-center gap-2 text-sm">
+              <CreditCard className="w-5 h-5" />
+              <span>Cards</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-semibold">UPI</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span>Net Banking</span>
+            </div>
+            <span className="text-sm">Powered by Razorpay</span>
           </div>
         </div>
       </section>
@@ -298,7 +392,7 @@ export default function HomePage() {
             Ready to extend your mind?
           </h2>
           <p className="text-xl text-warm-600 max-w-xl mx-auto mb-10">
-            Join thousands of thinkers, creators, and professionals who trust CogniKeep with their ideas.
+            Join thousands of thinkers, creators, and professionals who trust Novamind with their ideas.
           </p>
           <Link
             href="/signup"
@@ -318,7 +412,7 @@ export default function HomePage() {
               <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
                 <Brain className="h-4 w-4 text-white" />
               </div>
-              <span className="font-semibold text-warm-900">CogniKeep</span>
+              <span className="font-semibold text-warm-900">Novamind</span>
             </div>
 
             <p className="text-sm text-warm-500">
@@ -332,7 +426,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-warm-200 text-center text-sm text-warm-400">
-            © {new Date().getFullYear()} CogniKeep. Built for thinkers.
+            © {new Date().getFullYear()} Novamind. Built for thinkers.
           </div>
         </div>
       </footer>
@@ -422,5 +516,16 @@ function PrivacyBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
       <span className="text-primary-400">{icon}</span>
       <span className="text-sm font-medium text-warm-300">{text}</span>
     </div>
+  )
+}
+
+function PricingFeature({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-3">
+      <div className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <Check className="w-3 h-3 text-primary-600" />
+      </div>
+      <span className="text-warm-600 text-sm">{text}</span>
+    </li>
   )
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { enforceBoardLimit } from '@/lib/subscription/feature-gate'
+import { rateLimitMiddleware } from '@/lib/security/rate-limit'
 
 export async function GET() {
   const supabase = await createClient()
@@ -23,11 +25,27 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const rateLimit = rateLimitMiddleware(request, 'boards/create')
+  if (!rateLimit.allowed) return rateLimit.response!
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Check board limit
+  const limitCheck = await enforceBoardLimit(user.id)
+  if (!limitCheck.allowed) {
+    return NextResponse.json({
+      error: limitCheck.error?.message,
+      code: limitCheck.error?.code,
+      currentCount: limitCheck.error?.currentCount,
+      limit: limitCheck.error?.limit,
+      upgradeRequired: true,
+    }, { status: 403 })
   }
 
   try {

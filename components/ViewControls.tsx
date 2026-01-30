@@ -43,11 +43,11 @@ export function ViewControls({
 
       {/* Sort Dropdown */}
       <div className="relative group">
-        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
+        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-warm-200 dark:border-warm-600 rounded-xl text-sm text-warm-600 dark:text-warm-300 hover:bg-warm-50 dark:hover:bg-warm-700">
           <ArrowUpDown className="h-4 w-4" />
           <span className="hidden sm:inline">Sort</span>
         </button>
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
           <div className="p-1">
             {sortOptions.map((option) => (
               <button
@@ -59,15 +59,15 @@ export function ViewControls({
                     onSortChange(option.value, 'desc')
                   }
                 }}
-                className={`w-full text-left px-3 py-2 text-sm rounded flex items-center justify-between ${
+                className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between ${
                   sortBy === option.value
-                    ? 'bg-primary-50 dark:bg-sky-900/30 text-primary-700 dark:text-sky-300'
-                    : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                    : 'text-warm-700 dark:text-warm-300 hover:bg-warm-50 dark:hover:bg-warm-700'
                 }`}
               >
                 {option.label}
                 {sortBy === option.value && (
-                  <span className="text-xs text-gray-500 dark:text-slate-400">
+                  <span className="text-xs text-warm-500 dark:text-warm-400">
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
@@ -78,13 +78,13 @@ export function ViewControls({
       </div>
 
       {/* View Toggle */}
-      <div className="flex items-center border border-gray-200 dark:border-slate-600 rounded-lg overflow-hidden">
+      <div className="flex items-center border border-warm-200 dark:border-warm-600 rounded-xl overflow-hidden">
         <button
           onClick={() => onViewModeChange('grid')}
           className={`p-1.5 ${
             viewMode === 'grid'
-              ? 'bg-primary-50 dark:bg-sky-900/30 text-primary-600 dark:text-sky-400'
-              : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'
+              ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'text-warm-400 dark:text-warm-500 hover:text-warm-600 dark:hover:text-warm-300 hover:bg-warm-50 dark:hover:bg-warm-700'
           }`}
           title="Grid view"
         >
@@ -94,8 +94,8 @@ export function ViewControls({
           onClick={() => onViewModeChange('list')}
           className={`p-1.5 ${
             viewMode === 'list'
-              ? 'bg-primary-50 dark:bg-sky-900/30 text-primary-600 dark:text-sky-400'
-              : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'
+              ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'text-warm-400 dark:text-warm-500 hover:text-warm-600 dark:hover:text-warm-300 hover:bg-warm-50 dark:hover:bg-warm-700'
           }`}
           title="List view"
         >

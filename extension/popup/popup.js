@@ -1,4 +1,4 @@
-// CogniKeep Extension Popup
+// Novamind Extension Popup
 
 const API_BASE_URL = 'http://localhost:3000'
 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       textInputGroup.classList.add('hidden')
       document.querySelector('.current-page').classList.remove('hidden')
-      btnText.textContent = 'Save to CogniKeep'
+      btnText.textContent = 'Save to Novamind'
     }
   })
 
@@ -81,10 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Handle screenshot capture
       if (type === 'screenshot') {
         btnLoading.textContent = 'Capturing...'
-        console.log('CogniKeep Popup: Requesting screenshot capture...')
+        console.log('Novamind Popup: Requesting screenshot capture...')
 
         const result = await chrome.runtime.sendMessage({ action: 'capture-screenshot' })
-        console.log('CogniKeep Popup: Screenshot result:', result)
+        console.log('Novamind Popup: Screenshot result:', result)
 
         if (!result || !result.success) {
           throw new Error(result?.error || 'Failed to capture screenshot')
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error(err.error || 'Failed to save')
       }
 
-      showMessage('Saved to CogniKeep!', 'success')
+      showMessage('Saved to Novamind!', 'success')
 
       // Clear form
       textContent.value = ''

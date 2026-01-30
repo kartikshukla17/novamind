@@ -7,7 +7,7 @@ export async function extractLinkMetadata(url: string): Promise<Record<string, u
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; CogniKeep/1.0)',
+        'User-Agent': 'Mozilla/5.0 (compatible; Novamind/1.0)',
       },
     })
     const html = await response.text()

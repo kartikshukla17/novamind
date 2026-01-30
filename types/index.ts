@@ -13,6 +13,7 @@ export interface Item {
   metadata: Record<string, unknown> | null
   ai_summary: string | null
   ai_tags: string[] | null
+  ai_description: string | null // Detailed description for semantic search
   custom_tags: string[] | null
   is_favorite: boolean
   is_archived: boolean
@@ -113,4 +114,61 @@ export interface LinkMetadata {
   description: string | null
   image: string | null
   siteName: string | null
+}
+
+// Subscription types
+export type SubscriptionTier = 'free' | 'pro'
+
+export type SubscriptionStatus = 'inactive' | 'created' | 'authenticated' | 'active' | 'pending' | 'halted' | 'cancelled' | 'completed' | 'expired'
+
+export interface Subscription {
+  id: string
+  user_id: string
+  razorpay_subscription_id: string | null
+  razorpay_customer_id: string | null
+  razorpay_plan_id: string | null
+  status: SubscriptionStatus
+  current_period_start: string | null
+  current_period_end: string | null
+  cancelled_at: string | null
+  cancel_at_period_end: boolean
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface Payment {
+  id: string
+  user_id: string
+  subscription_id: string | null
+  razorpay_payment_id: string | null
+  razorpay_order_id: string | null
+  amount: number
+  currency: string
+  status: 'pending' | 'authorized' | 'captured' | 'failed' | 'refunded'
+  method: string | null
+  error_code: string | null
+  error_description: string | null
+  created_at: string
+}
+
+export interface Plan {
+  id: string
+  razorpay_plan_id: string | null
+  name: string
+  amount: number
+  currency: string
+  interval: string
+  features: string[]
+  is_active: boolean
+  created_at: string
+}
+
+export interface FeatureLimits {
+  maxItems: number
+  maxBoards: number
+  hasExtensionAccess: boolean
+  hasAdvancedAI: boolean
+  hasPrioritySupport: boolean
+  hasExportData: boolean
 }

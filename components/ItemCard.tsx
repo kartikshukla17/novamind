@@ -11,7 +11,7 @@ import { formatRelativeTime, truncate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
 interface ItemCardProps {
-  item: Item
+  item: Item & { matchReason?: string; relevanceScore?: number }
   viewMode?: ViewMode
   onAddToBoard?: (itemId: string) => void
   onClick?: () => void
@@ -232,7 +232,7 @@ export function ItemCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md dark:hover:shadow-slate-900/50 transition-all cursor-pointer animate-fade-in ${
+      className={`bg-white dark:bg-warm-800 rounded-xl border border-warm-200 dark:border-warm-700 overflow-hidden hover:shadow-md dark:hover:shadow-warm-900/50 transition-all cursor-pointer animate-fade-in ${
         deleting ? 'opacity-50 pointer-events-none' : ''
       } ${isSelected ? 'ring-2 ring-primary-500' : ''}`}
     >
@@ -422,6 +422,15 @@ export function ItemCard({
         <p className="text-xs text-gray-400 dark:text-slate-500">
           {formatRelativeTime(item.created_at)}
         </p>
+
+        {/* Search Match Reason */}
+        {item.matchReason && (
+          <div className="mt-2 pt-2 border-t border-warm-100 dark:border-warm-700">
+            <p className="text-xs text-primary-600 dark:text-primary-400 flex items-center gap-1">
+              <span className="font-medium">Match:</span> {item.matchReason}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

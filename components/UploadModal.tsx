@@ -4,9 +4,10 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   X, FileText, Link as LinkIcon, Image as ImageIcon,
-  Upload, Loader2
+  Upload, Loader2, Sparkles
 } from 'lucide-react'
 import { cn, isValidUrl, detectContentType } from '@/lib/utils'
+import { describeImage, isImageCaptionReady, isImageCaptionLoading } from '@/lib/ai/local-ai'
 
 interface UploadModalProps {
   onClose: () => void
@@ -21,6 +22,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
   const [title, setTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [aiStatus, setAiStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -29,6 +31,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     e.preventDefault()
     setError(null)
     setLoading(true)
+    setAiStatus(null)
 
     try {
       let payload: FormData | Record<string, unknown>
@@ -49,12 +52,30 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
 
         const uploadData = await uploadRes.json()
 
+        // Generate AI description for images
+        let aiDescription: string | null = null
+        if (uploadData.isImage && file) {
+          try {
+            setAiStatus('Analyzing image with AI...')
+            aiDescription = await describeImage(file, (progress, status) => {
+              setAiStatus(status || `Loading AI model... ${Math.round(progress)}%`)
+            })
+            if (aiDescription) {
+              console.log('Generated image description:', aiDescription)
+            }
+          } catch (err) {
+            console.warn('Image description failed, continuing without:', err)
+          }
+          setAiStatus(null)
+        }
+
         payload = {
           type: uploadData.isImage ? 'image' : 'file',
           file_path: uploadData.path,
           file_type: uploadData.mimeType,
           title: title || file.name,
           thumbnail_url: uploadData.isImage ? uploadData.publicUrl : null,
+          ai_description: aiDescription,
         }
       } else {
         const detectedType = detectContentType(content)
@@ -84,6 +105,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setLoading(false)
+      setAiStatus(null)
     }
   }
 
@@ -109,6 +131,25 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     }
   }
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const pastedFile = item.getAsFile()
+        if (pastedFile) {
+          e.preventDefault()
+          setFile(pastedFile)
+          setInputType('file')
+          if (!title) {
+            setTitle(pastedFile.name || 'Image from clipboard')
+          }
+          break
+        }
+      }
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50 dark:bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -124,7 +165,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4">
+        <form onSubmit={handleSubmit} onPaste={handlePaste} className="p-4">
           {/* Type Selector */}
           <div className="flex gap-2 mb-4">
             <TypeButton
@@ -173,7 +214,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               ) : (
                 <>
                   <p className="text-gray-600 dark:text-slate-400 font-medium">
-                    Drop a file here or click to browse
+                    Drop a file, paste an image, or click to browse
                   </p>
                   <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
                     Supports images, documents, and more
@@ -209,6 +250,14 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
             />
           </div>
 
+          {/* AI Status */}
+          {aiStatus && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-4 py-2 rounded-xl">
+              <Sparkles className="h-4 w-4 animate-pulse" />
+              <span>{aiStatus}</span>
+            </div>
+          )}
+
           {/* Submit Button */}
           <div className="mt-6 flex justify-end gap-3">
             <button
@@ -224,7 +273,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               className="flex items-center gap-2 px-4 py-2 bg-primary-600 dark:bg-sky-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-sky-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading ? 'Saving...' : 'Save Item'}
+              {loading ? (aiStatus ? 'Analyzing...' : 'Saving...') : 'Save Item'}
             </button>
           </div>
         </form>

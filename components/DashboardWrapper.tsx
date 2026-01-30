@@ -2,7 +2,9 @@
 
 import { ReactNode } from 'react'
 import { LocalFirstProvider } from './LocalFirstProvider'
+import { ThemeProvider } from './ThemeProvider'
 import { AIStatus } from './AIStatus'
+import { ImageAnalyzer } from './ImageAnalyzer'
 
 interface DashboardWrapperProps {
   children: ReactNode
@@ -10,9 +12,12 @@ interface DashboardWrapperProps {
 
 export function DashboardWrapper({ children }: DashboardWrapperProps) {
   return (
-    <LocalFirstProvider>
-      {children}
-      <AIStatus />
-    </LocalFirstProvider>
+    <ThemeProvider>
+      <LocalFirstProvider>
+        {children}
+        <AIStatus />
+        <ImageAnalyzer />
+      </LocalFirstProvider>
+    </ThemeProvider>
   )
 }

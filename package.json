@@ -1,5 +1,5 @@
 {
-  "name": "cognikeep",
+  "name": "novamind",
   "version": "1.0.0",
   "description": "A second brain application for capturing and AI-categorizing content",
   "private": true,
@@ -21,9 +21,11 @@
     "next": "^14.2.35",
     "openai": "^6.17.0",
     "postcss": "^8.5.6",
+    "razorpay": "^2.9.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.0"
+    "tailwindcss": "^3.4.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^25.1.0",

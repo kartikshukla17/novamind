@@ -1,6 +1,6 @@
-// CogniKeep PWA Service Worker
+// Novamind PWA Service Worker
 
-const CACHE_NAME = 'cognikeep-v1'
+const CACHE_NAME = 'novamind-v2'
 const STATIC_ASSETS = [
   '/',
   '/all',
@@ -47,18 +47,30 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Don't intercept cross-origin requests (CDN, WASM, Hugging Face, etc.)
+  // so the page's CSP and fetches work correctly for AI models
+  try {
+    const url = new URL(event.request.url)
+    if (url.origin !== self.location.origin) {
+      return
+    }
+  } catch (_) {
+    return
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response for caching
-        const responseClone = response.clone()
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone)
-        })
+        // Only cache same-origin successful responses
+        if (response.status === 200 && response.type === 'basic') {
+          const responseClone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone)
+          })
+        }
         return response
       })
       .catch(() => {
-        // Fallback to cache
         return caches.match(event.request)
       })
   )

@@ -61,7 +61,7 @@ export default function LoginPage() {
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
               <Brain className="h-7 w-7 text-white" />
             </div>
-            <span className="text-2xl font-bold">CogniKeep</span>
+            <span className="text-2xl font-bold">Novamind</span>
           </Link>
           <h2 className="text-4xl font-bold mb-4">Welcome back to your second brain</h2>
           <p className="text-lg text-primary-100 mb-8">
@@ -89,7 +89,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
               <Brain className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-warm-900">CogniKeep</span>
+            <span className="text-xl font-bold text-warm-900">Novamind</span>
           </div>
 
           <h1 className="text-2xl font-bold text-warm-900 mb-2">Sign in</h1>

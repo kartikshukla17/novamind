@@ -1,36 +1,36 @@
-// CogniKeep Chrome Extension - Background Service Worker
+// Novamind Chrome Extension - Background Service Worker
 
 const API_BASE_URL = 'http://localhost:3000'
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: 'save-to-cognikeep',
-    title: 'Save to CogniKeep',
+    id: 'save-to-novamind',
+    title: 'Save to Novamind',
     contexts: ['page', 'selection', 'link', 'image']
   })
 
   chrome.contextMenus.create({
-    id: 'save-selection-to-cognikeep',
-    title: 'Save selected text to CogniKeep',
+    id: 'save-selection-to-novamind',
+    title: 'Save selected text to Novamind',
     contexts: ['selection']
   })
 
   chrome.contextMenus.create({
-    id: 'save-link-to-cognikeep',
-    title: 'Save link to CogniKeep',
+    id: 'save-link-to-novamind',
+    title: 'Save link to Novamind',
     contexts: ['link']
   })
 
   chrome.contextMenus.create({
-    id: 'save-image-to-cognikeep',
-    title: 'Save image to CogniKeep',
+    id: 'save-image-to-novamind',
+    title: 'Save image to Novamind',
     contexts: ['image']
   })
 
   chrome.contextMenus.create({
-    id: 'save-screenshot-to-cognikeep',
-    title: 'Save page screenshot to CogniKeep',
+    id: 'save-screenshot-to-novamind',
+    title: 'Save page screenshot to Novamind',
     contexts: ['page']
   })
 })
@@ -40,7 +40,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   let itemData = null
 
   switch (info.menuItemId) {
-    case 'save-selection-to-cognikeep':
+    case 'save-selection-to-novamind':
       if (info.selectionText) {
         itemData = {
           type: 'text',
@@ -50,7 +50,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
       break
 
-    case 'save-link-to-cognikeep':
+    case 'save-link-to-novamind':
       if (info.linkUrl) {
         itemData = {
           type: 'link',
@@ -60,25 +60,25 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
       break
 
-    case 'save-image-to-cognikeep':
+    case 'save-image-to-novamind':
       if (info.srcUrl) {
         itemData = {
           type: 'image',
           url: info.srcUrl,
           thumbnail_url: info.srcUrl,
-          title: `Image from ${tab?.title || 'unknown page'}`
+          title: `Image from ${tab?.title || 'web'}`
         }
       }
       break
 
-    case 'save-screenshot-to-cognikeep':
+    case 'save-screenshot-to-novamind':
       // Capture the visible tab as a screenshot
       if (tab?.id) {
         await captureAndSaveScreenshot(tab)
       }
       return // Return early since we handle this separately
 
-    case 'save-to-cognikeep':
+    case 'save-to-novamind':
     default:
       if (info.selectionText) {
         itemData = {
@@ -105,7 +105,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 chrome.commands.onCommand.addListener(async (command) => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
-  if (command === 'save-to-cognikeep') {
+  if (command === 'save-to-novamind') {
     if (tab?.url) {
       await saveItem({
         type: 'link',
@@ -117,7 +117,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 
   if (command === 'capture-screenshot') {
     if (tab) {
-      console.log('CogniKeep: Screenshot shortcut triggered')
+      console.log('Novamind: Screenshot shortcut triggered')
       await captureAndSaveScreenshot(tab)
     }
   }
@@ -161,7 +161,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'clipboard-capture') {
     handleClipboardCapture(request.data).then((result) => {
       if (result.success) {
-        console.log('CogniKeep: Clipboard content saved')
+        console.log('Novamind: Clipboard content saved')
       }
     })
     return false // No async response needed
@@ -190,23 +190,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Capture visible tab as screenshot and save
 async function captureAndSaveScreenshot(tab) {
   try {
-    console.log('CogniKeep: Starting screenshot capture for tab', tab.id, tab.url)
+    console.log('Novamind: Starting screenshot capture for tab', tab.id, tab.url)
 
     const { authToken } = await chrome.storage.local.get('authToken')
-    console.log('CogniKeep: Auth token exists:', !!authToken)
+    console.log('Novamind: Auth token exists:', !!authToken)
 
     if (!authToken) {
-      showNotification('Please log in to CogniKeep first', 'error')
+      showNotification('Please log in to Novamind first', 'error')
       return { success: false, error: 'Not authenticated' }
     }
 
     // Capture the visible tab
-    console.log('CogniKeep: Capturing visible tab, windowId:', tab.windowId)
+    console.log('Novamind: Capturing visible tab, windowId:', tab.windowId)
     const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId || null, {
       format: 'png',
       quality: 100
     })
-    console.log('CogniKeep: Screenshot captured, size:', dataUrl?.length || 0)
+    console.log('Novamind: Screenshot captured, size:', dataUrl?.length || 0)
 
     // Convert to blob and upload
     const blob = base64ToBlob(dataUrl, 'image/png')
@@ -215,7 +215,7 @@ async function captureAndSaveScreenshot(tab) {
     const formData = new FormData()
     formData.append('file', blob, filename)
 
-    console.log('CogniKeep: Uploading screenshot...')
+    console.log('Novamind: Uploading screenshot...')
     const uploadResponse = await fetch(`${API_BASE_URL}/api/upload`, {
       method: 'POST',
       headers: {
@@ -224,30 +224,30 @@ async function captureAndSaveScreenshot(tab) {
       body: formData
     })
 
-    console.log('CogniKeep: Upload response status:', uploadResponse.status)
+    console.log('Novamind: Upload response status:', uploadResponse.status)
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text()
-      console.error('CogniKeep: Upload failed:', errorText)
+      console.error('Novamind: Upload failed:', errorText)
       throw new Error('Failed to upload screenshot: ' + errorText)
     }
 
     const uploadResult = await uploadResponse.json()
-    console.log('CogniKeep: Upload result:', uploadResult)
+    console.log('Novamind: Upload result:', uploadResult)
 
-    // Create the item
+    // Create the item with page info for better search
     const result = await saveItem({
       type: 'image',
-      title: `Screenshot: ${tab.title || 'Page'}`,
+      title: `Screenshot of ${tab.title || 'page'}`,
       file_path: uploadResult.path,
       file_type: 'image/png',
       thumbnail_url: uploadResult.publicUrl,
-      url: tab.url // Also store the URL of the page
+      url: tab.url
     })
 
     return result
   } catch (error) {
-    console.error('CogniKeep: Error capturing screenshot:', error)
+    console.error('Novamind: Error capturing screenshot:', error)
     showNotification('Failed to capture screenshot: ' + error.message, 'error')
     return { success: false, error: error.message || String(error) }
   }
@@ -261,7 +261,7 @@ async function handleClipboardCapture(data) {
       const { authToken } = await chrome.storage.local.get('authToken')
 
       if (!authToken) {
-        showNotification('Please log in to CogniKeep first', 'error')
+        showNotification('Please log in to Novamind first', 'error')
         return { success: false, error: 'Not authenticated' }
       }
 
@@ -270,7 +270,7 @@ async function handleClipboardCapture(data) {
 
       // Create form data for upload
       const formData = new FormData()
-      const filename = `screenshot-${Date.now()}.${data.mimeType.split('/')[1] || 'png'}`
+      const filename = `image-${Date.now()}.${data.mimeType.split('/')[1] || 'png'}`
       formData.append('file', blob, filename)
 
       // Upload the image
@@ -289,16 +289,18 @@ async function handleClipboardCapture(data) {
       const uploadResult = await uploadResponse.json()
 
       // Now create the item with the uploaded image
-      return saveItem({
+      const result = await saveItem({
         type: 'image',
-        title: data.title || `Screenshot ${new Date().toLocaleString()}`,
+        title: data.title || 'Image from clipboard',
         file_path: uploadResult.path,
         file_type: data.mimeType,
         thumbnail_url: uploadResult.publicUrl
       })
+
+      return result
     } catch (error) {
-      console.error('Error uploading screenshot:', error)
-      showNotification('Failed to save screenshot', 'error')
+      console.error('Error uploading image:', error)
+      showNotification('Failed to save image', 'error')
       return { success: false, error: error.message }
     }
   }
@@ -326,14 +328,14 @@ function base64ToBlob(dataUrl, mimeType) {
   return new Blob([byteArray], { type: mimeType || 'image/png' })
 }
 
-// Save item to CogniKeep API
+// Save item to Novamind API
 async function saveItem(data) {
   try {
     // Get auth token from storage
     const { authToken } = await chrome.storage.local.get('authToken')
 
     if (!authToken) {
-      showNotification('Please log in to CogniKeep first', 'error')
+      showNotification('Please log in to Novamind first', 'error')
       return { success: false, error: 'Not authenticated' }
     }
 
@@ -351,7 +353,7 @@ async function saveItem(data) {
     }
 
     const result = await response.json()
-    showNotification('Saved to CogniKeep!', 'success')
+    showNotification('Saved to Novamind!', 'success')
     return { success: true, item: result }
   } catch (error) {
     console.error('Error saving item:', error)
@@ -371,7 +373,7 @@ function showNotification(message, type = 'info') {
   chrome.notifications?.create({
     type: 'basic',
     iconUrl: 'icons/icon128.png',
-    title: 'CogniKeep',
+    title: 'Novamind',
     message: message
   })
 }

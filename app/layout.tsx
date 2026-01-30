@@ -11,13 +11,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'CogniKeep - Your Second Brain',
+  title: 'Novamind - Your Second Brain',
   description: 'Remember everything. Organize nothing. Your private AI-powered second brain for capturing and organizing ideas, links, images, and more.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'CogniKeep',
+    title: 'Novamind',
   },
   formatDetection: {
     telephone: false,

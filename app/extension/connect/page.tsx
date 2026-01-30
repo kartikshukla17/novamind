@@ -48,12 +48,12 @@ export default function ExtensionConnectPage() {
 
   function storeTokenLocally(token: string) {
     // Store token in a way the extension can access
-    localStorage.setItem('cognikeep_extension_token', token)
+    localStorage.setItem('novamind_extension_token', token)
     setStatus('connected')
 
     // Also try to communicate with extension via window message
     window.postMessage({
-      type: 'COGNIKEEP_AUTH_TOKEN',
+      type: 'NOVAMIND_AUTH_TOKEN',
       token
     }, '*')
   }
@@ -76,7 +76,7 @@ export default function ExtensionConnectPage() {
           <Brain className="h-12 w-12 text-primary-600 dark:text-sky-400 mx-auto mb-4" />
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Login Required</h1>
           <p className="text-gray-600 dark:text-slate-400 mb-6">
-            Please log in to CogniKeep first, then return to this page.
+            Please log in to Novamind first, then return to this page.
           </p>
           <a
             href="/login?redirect=/extension/connect"
@@ -98,12 +98,12 @@ export default function ExtensionConnectPage() {
           </div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Extension Connected!</h1>
           <p className="text-gray-600 dark:text-slate-400 mb-6">
-            Your CogniKeep extension is now connected. You can close this tab.
+            Your Novamind extension is now connected. You can close this tab.
           </p>
           <div className="bg-gray-50 dark:bg-slate-700/50 p-4 rounded-lg text-left text-sm">
             <p className="font-medium text-gray-700 dark:text-slate-300 mb-2">Next steps:</p>
             <ol className="list-decimal list-inside text-gray-600 dark:text-slate-400 space-y-1">
-              <li>Click the CogniKeep extension icon</li>
+              <li>Click the Novamind extension icon</li>
               <li>Click &quot;Refresh&quot; to sync</li>
               <li>Start saving content!</li>
             </ol>

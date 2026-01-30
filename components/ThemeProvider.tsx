@@ -18,6 +18,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
   const supabase = createClient()
 
+  // Ensure light mode is applied on initial render (before hydration)
+  useEffect(() => {
+    // Remove dark class immediately to prevent flash
+    document.documentElement.classList.remove('dark')
+  }, [])
+
   // Load theme from user settings (sync with DB when logged in)
   useEffect(() => {
     async function loadTheme() {
@@ -29,6 +35,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           : cached
         setResolvedTheme(resolved)
         applyTheme(resolved)
+      } else {
+        // Default to light mode if no cached theme
+        applyTheme('light')
       }
 
       const { data: { user } } = await supabase.auth.getUser()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ItemCard } from '@/components/ItemCard'
 import { UploadButton } from '@/components/UploadButton'
@@ -9,14 +9,17 @@ import { ViewControls } from '@/components/ViewControls'
 import { FilterDropdown } from '@/components/FilterDropdown'
 import { ItemDetailsModal } from '@/components/ItemDetailsModal'
 import { AddToBoardModal } from '@/components/AddToBoardModal'
-import { Loader2, Trash2, X, Trash, Package, Sparkles, Plus } from 'lucide-react'
+import { Loader2, Trash2, X, Trash, Package, Sparkles, Plus, Brain } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Item, SearchFilters, SortOption, SortDirection, ViewMode } from '@/types'
 
 export default function AllItemsPage() {
   const [items, setItems] = useState<Item[]>([])
   const [filteredItems, setFilteredItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchIntent, setSearchIntent] = useState<string | null>(null)
   const [filters, setFilters] = useState<SearchFilters>({})
   const [sortBy, setSortBy] = useState<SortOption>('created_at')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
@@ -26,11 +29,57 @@ export default function AllItemsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [pasteStatus, setPasteStatus] = useState<'saving' | 'saved' | 'error' | null>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const supabase = createClient()
 
   // Load items
   useEffect(() => {
     loadItems()
+  }, [])
+
+  // Paste image anywhere on /all page – save to Novamind
+  useEffect(() => {
+    async function handlePaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (!file) continue
+          e.preventDefault()
+          e.stopPropagation()
+          setPasteStatus('saving')
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+            if (!uploadRes.ok) throw new Error('Upload failed')
+            const uploadData = await uploadRes.json()
+            const createRes = await fetch('/api/items', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: uploadData.isImage ? 'image' : 'file',
+                title: file.name || 'Image from clipboard',
+                file_path: uploadData.path,
+                file_type: uploadData.mimeType,
+                thumbnail_url: uploadData.isImage ? uploadData.publicUrl : null,
+              }),
+            })
+            if (!createRes.ok) throw new Error('Create failed')
+            setPasteStatus('saved')
+            loadItems()
+          } catch {
+            setPasteStatus('error')
+          }
+          setTimeout(() => setPasteStatus(null), 3000)
+          return
+        }
+      }
+    }
+    document.addEventListener('paste', handlePaste, true)
+    return () => document.removeEventListener('paste', handlePaste, true)
   }, [])
 
   async function loadItems() {
@@ -66,20 +115,76 @@ export default function AllItemsPage() {
     setLoading(false)
   }
 
-  // Apply filters, search, and sorting
+  // Semantic search function (local processing - no external API)
+  const performSemanticSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setFilteredItems(items)
+      setSearchIntent(null)
+      setSearching(false)
+      return
+    }
+
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      
+      if (data.results) {
+        // Merge with full item data from local state
+        const searchResults = data.results.map((result: Item & { relevanceScore?: number; matchReason?: string }) => {
+          const fullItem = items.find(i => i.id === result.id)
+          return fullItem ? { ...fullItem, relevanceScore: result.relevanceScore, matchReason: result.matchReason } : result
+        })
+        setFilteredItems(searchResults)
+        setSearchIntent(data.parsed?.intent || null)
+      }
+    } catch (error) {
+      console.error('Search error:', error)
+      // Fall back to client-side search
+      applyClientSideFilters(query)
+    } finally {
+      setSearching(false)
+    }
+  }, [items])
+
+  // Debounced search
   useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    if (!searchQuery.trim()) {
+      applyClientSideFilters('')
+      return
+    }
+
+    // Debounce search for 500ms
+    searchTimeoutRef.current = setTimeout(() => {
+      performSemanticSearch(searchQuery)
+    }, 500)
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [searchQuery, performSemanticSearch])
+
+  // Client-side filter function (for non-search filtering)
+  function applyClientSideFilters(query: string) {
     let result = [...items]
 
-    // Search
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+    // Search (basic client-side fallback)
+    if (query) {
+      const lowerQuery = query.toLowerCase()
       result = result.filter(
         (item) =>
-          item.title?.toLowerCase().includes(query) ||
-          item.content?.toLowerCase().includes(query) ||
-          item.ai_summary?.toLowerCase().includes(query) ||
-          item.ai_tags?.some((tag) => tag.toLowerCase().includes(query)) ||
-          item.custom_tags?.some((tag) => tag.toLowerCase().includes(query))
+          item.title?.toLowerCase().includes(lowerQuery) ||
+          item.content?.toLowerCase().includes(lowerQuery) ||
+          item.ai_summary?.toLowerCase().includes(lowerQuery) ||
+          item.ai_description?.toLowerCase().includes(lowerQuery) ||
+          item.ai_tags?.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
+          item.custom_tags?.some((tag) => tag.toLowerCase().includes(lowerQuery))
       )
     }
 
@@ -139,7 +244,15 @@ export default function AllItemsPage() {
     })
 
     setFilteredItems(result)
-  }, [items, searchQuery, filters, sortBy, sortDirection])
+    setSearchIntent(null)
+  }
+
+  // Apply filters when non-search filters change
+  useEffect(() => {
+    if (!searchQuery) {
+      applyClientSideFilters('')
+    }
+  }, [items, filters, sortBy, sortDirection])
 
   // Count active filters
   const activeFiltersCount = Object.values(filters).filter(
@@ -225,6 +338,37 @@ export default function AllItemsPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Paste feedback toast */}
+      {pasteStatus && (
+        <div
+          className={cn(
+            'fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg flex items-center gap-2 animate-fade-in',
+            pasteStatus === 'saving' && 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300',
+            pasteStatus === 'saved' && 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300',
+            pasteStatus === 'error' && 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
+          )}
+        >
+          {pasteStatus === 'saving' && (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving image...
+            </>
+          )}
+          {pasteStatus === 'saved' && (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Image saved!
+            </>
+          )}
+          {pasteStatus === 'error' && (
+            <>
+              <X className="h-4 w-4" />
+              Failed to save image
+            </>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-6 mb-8">
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -257,28 +401,43 @@ export default function AllItemsPage() {
         </div>
 
         {/* Search and Controls */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSearch={setSearchQuery}
-              placeholder="Search items..."
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSearch={setSearchQuery}
+                placeholder="Search naturally... e.g. 'that screenshot' or 'recipe with pasta'"
+              />
+              {searching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
+                </div>
+              )}
+            </div>
+            <ViewControls
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortChange={(sort, dir) => {
+                setSortBy(sort)
+                setSortDirection(dir)
+              }}
+              filters={filters}
+              onFilterChange={setFilters}
+              activeFiltersCount={activeFiltersCount}
             />
           </div>
-          <ViewControls
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortChange={(sort, dir) => {
-              setSortBy(sort)
-              setSortDirection(dir)
-            }}
-            filters={filters}
-            onFilterChange={setFilters}
-            activeFiltersCount={activeFiltersCount}
-          />
+          
+          {/* Smart Search Intent Display */}
+          {searchIntent && searchQuery && (
+            <div className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-4 py-2 rounded-xl">
+              <Brain className="h-4 w-4" />
+              <span>Looking for: <span className="font-medium">{searchIntent}</span></span>
+            </div>
+          )}
         </div>
 
         {/* Selection toolbar */}

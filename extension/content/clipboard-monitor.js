@@ -1,5 +1,5 @@
-// CogniKeep Clipboard Monitor
-// Listens for copy events and saves to CogniKeep when enabled in dashboard settings
+// Novamind Clipboard Monitor
+// Listens for copy events and saves to Novamind when enabled in dashboard settings
 
 let isMonitoringEnabled = false
 let lastSavedContent = ''
@@ -19,7 +19,7 @@ async function checkMonitoringStatus() {
   try {
     const { settings } = await chrome.storage.local.get('settings')
     isMonitoringEnabled = settings?.clipboardMonitoring === true
-    console.log('CogniKeep: Clipboard monitoring is', isMonitoringEnabled ? 'enabled' : 'disabled')
+    console.log('Novamind: Clipboard monitoring is', isMonitoringEnabled ? 'enabled' : 'disabled')
   } catch (e) {
     isMonitoringEnabled = false
   }
@@ -33,7 +33,7 @@ try {
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && changes.settings) {
       isMonitoringEnabled = changes.settings.newValue?.clipboardMonitoring === true
-      console.log('CogniKeep: Clipboard monitoring updated to', isMonitoringEnabled ? 'enabled' : 'disabled')
+      console.log('Novamind: Clipboard monitoring updated to', isMonitoringEnabled ? 'enabled' : 'disabled')
     }
   })
 } catch (e) {
@@ -42,7 +42,7 @@ try {
 
 // Listen for settings updates from the web dashboard
 window.addEventListener('message', async (event) => {
-  if (event.data.type === 'COGNIKEEP_SETTINGS_UPDATE' && event.data.settings) {
+  if (event.data.type === 'NOVAMIND_SETTINGS_UPDATE' && event.data.settings) {
     const newEnabled = event.data.settings.clipboard_monitoring === true
     isMonitoringEnabled = newEnabled
 
@@ -51,18 +51,18 @@ window.addEventListener('message', async (event) => {
       const { settings = {} } = await chrome.storage.local.get('settings')
       settings.clipboardMonitoring = newEnabled
       await chrome.storage.local.set({ settings })
-      console.log('CogniKeep: Settings synced from dashboard, clipboard monitoring:', newEnabled ? 'enabled' : 'disabled')
+      console.log('Novamind: Settings synced from dashboard, clipboard monitoring:', newEnabled ? 'enabled' : 'disabled')
     } catch (e) {
       // Extension context may be invalidated (extension reloaded)
-      console.log('CogniKeep: Extension context invalidated, please refresh the page')
+      console.log('Novamind: Extension context invalidated, please refresh the page')
     }
   }
 })
 
-// Also check localStorage for settings (fallback when content script loads on CogniKeep pages)
+// Also check localStorage for settings (fallback when content script loads on Novamind pages)
 if (window.location.hostname === 'localhost' && window.location.port === '3000') {
   try {
-    const storedSettings = localStorage.getItem('cognikeep_settings')
+    const storedSettings = localStorage.getItem('novamind_settings')
     if (storedSettings) {
       const parsed = JSON.parse(storedSettings)
       if (parsed.clipboard_monitoring !== undefined) {
@@ -121,22 +121,22 @@ document.addEventListener('copy', async (e) => {
 
       if (imageData) {
         // We have an image! Convert to base64 and send
-        const base64 = await blobToBase64(imageData.blob)
-
-        try {
-          chrome.runtime.sendMessage({
-            action: 'clipboard-capture',
-            data: {
-              type: 'image',
-              imageData: base64,
-              mimeType: imageData.mimeType,
-              title: `Screenshot ${new Date().toLocaleString()}`
-            }
-          })
-          console.log('CogniKeep: Screenshot captured from clipboard')
-        } catch (e) {
-          // Extension context invalidated
-        }
+        blobToBase64(imageData.blob).then((base64) => {
+          try {
+            chrome.runtime.sendMessage({
+              action: 'clipboard-capture',
+              data: {
+                type: 'image',
+                imageData: base64,
+                mimeType: imageData.mimeType,
+                title: 'Image from clipboard'
+              }
+            })
+            console.log('Novamind: Image captured from clipboard')
+          } catch (e) {
+            // Extension context invalidated
+          }
+        }).catch(() => {})
         return
       }
 
@@ -169,7 +169,7 @@ document.addEventListener('copy', async (e) => {
             title: isUrl ? text.trim() : `Copied: ${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`
           }
         })
-        console.log('CogniKeep: Clipboard content captured and sent')
+        console.log('Novamind: Clipboard content captured and sent')
       } catch (e) {
         // Extension context invalidated
       }
@@ -179,39 +179,42 @@ document.addEventListener('copy', async (e) => {
   }, 100)
 })
 
-// Listen for paste events - this captures system screenshots!
-document.addEventListener('paste', async (e) => {
+// Listen for paste events - we NEVER call preventDefault() so the image always pastes into the page.
+// passive: true tells the browser we won't block; we defer our save to the next tick.
+document.addEventListener('paste', (e) => {
   if (!isMonitoringEnabled || !isExtensionValid()) return
 
   const items = e.clipboardData?.items
   if (!items) return
 
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
       const blob = item.getAsFile()
       if (!blob) continue
 
-      // Convert to base64
-      const base64 = await blobToBase64(blob)
-
-      try {
-        chrome.runtime.sendMessage({
-          action: 'clipboard-capture',
-          data: {
-            type: 'image',
-            imageData: base64,
-            mimeType: item.type,
-            title: `Screenshot ${new Date().toLocaleString()}`
-          }
-        })
-        console.log('CogniKeep: Screenshot captured from paste event')
-      } catch (e) {
-        // Extension context invalidated
-      }
-      return
+      const mimeType = item.type
+      // Defer so browser's default paste runs first
+      setTimeout(() => {
+        blobToBase64(blob).then((base64) => {
+          try {
+            chrome.runtime.sendMessage({
+              action: 'clipboard-capture',
+              data: {
+                type: 'image',
+                imageData: base64,
+                mimeType,
+                title: 'Image from clipboard'
+              }
+            })
+            console.log('Novamind: Image captured from paste event')
+          } catch (err) {}
+        }).catch(() => {})
+      }, 0)
+      break
     }
   }
-})
+}, { passive: true })
 
 // Also handle cut events
 document.addEventListener('cut', async (e) => {

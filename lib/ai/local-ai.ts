@@ -14,6 +14,8 @@ type Pipeline = (text: string, labels?: string[]) => Promise<{
 
 type SummarizationPipeline = (text: string, options?: { max_length: number; min_length: number }) => Promise<{ summary_text: string }[]>
 
+type ImageCaptionPipeline = (image: string | Blob | HTMLImageElement) => Promise<{ generated_text: string }[]>
+
 interface AIResult {
   category: string
   tags: string[]
@@ -23,7 +25,9 @@ interface AIResult {
 // Model loading state
 let classifierPipeline: Pipeline | null = null
 let summarizerPipeline: SummarizationPipeline | null = null
+let imageCaptionPipeline: ImageCaptionPipeline | null = null
 let isLoading = false
+let isLoadingImageModel = false
 let loadingProgress = 0
 
 // Available categories for classification
@@ -297,4 +301,160 @@ export async function batchCategorize(
   }
 
   return results
+}
+
+/**
+ * Check if image captioning model is ready
+ */
+export function isImageCaptionReady(): boolean {
+  return imageCaptionPipeline !== null
+}
+
+/**
+ * Check if image captioning model is loading
+ */
+export function isImageCaptionLoading(): boolean {
+  return isLoadingImageModel
+}
+
+/**
+ * Initialize image captioning model (lazy load - only when needed)
+ * This model is ~100MB so we load it separately from the main classifier
+ */
+export async function initializeImageCaption(
+  onProgress?: (progress: number, status: string) => void
+): Promise<void> {
+  if (!isBrowser) {
+    console.log('Image caption initialization skipped - not in browser')
+    return
+  }
+
+  if (imageCaptionPipeline || isLoadingImageModel) return
+
+  isLoadingImageModel = true
+
+  try {
+    const { pipeline, env } = await import('@xenova/transformers')
+
+    // Disable local model check to always use CDN
+    env.allowLocalModels = false
+    env.backends.onnx.wasm.numThreads = 1
+
+    onProgress?.(10, 'Loading image AI model...')
+
+    // Load image-to-text model for captioning
+    // Using a small but effective model
+    imageCaptionPipeline = await pipeline(
+      'image-to-text',
+      'Xenova/vit-gpt2-image-captioning',
+      {
+        progress_callback: (data: { progress?: number; status?: string }) => {
+          if (data.progress) {
+            const progress = 10 + (data.progress * 0.9)
+            onProgress?.(progress, data.status || 'Downloading image model...')
+          }
+        }
+      }
+    ) as unknown as ImageCaptionPipeline
+
+    onProgress?.(100, 'Image AI ready!')
+
+  } catch (error) {
+    console.error('Failed to initialize image captioning:', error)
+    throw error
+  } finally {
+    isLoadingImageModel = false
+  }
+}
+
+/**
+ * Generate a description of an image using AI
+ * Returns a text description of what's in the image
+ */
+export async function describeImage(
+  imageSource: string | Blob | File,
+  onProgress?: (progress: number, status: string) => void
+): Promise<string | null> {
+  if (!isBrowser) {
+    return null
+  }
+
+  try {
+    // Initialize model if not ready
+    if (!imageCaptionPipeline) {
+      await initializeImageCaption(onProgress)
+    }
+
+    if (!imageCaptionPipeline) {
+      console.warn('Image captioning not available')
+      return null
+    }
+
+    // Convert File/Blob to data URL if needed
+    let imageInput: string | Blob
+    if (imageSource instanceof File || imageSource instanceof Blob) {
+      imageInput = await blobToDataURL(imageSource)
+    } else {
+      imageInput = imageSource
+    }
+
+    // Generate caption
+    const result = await imageCaptionPipeline(imageInput)
+    
+    if (result && result.length > 0 && result[0].generated_text) {
+      return result[0].generated_text
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error describing image:', error)
+    return null
+  }
+}
+
+/**
+ * Convert Blob to data URL
+ */
+function blobToDataURL(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+/**
+ * Describe an image from URL (fetches and processes)
+ */
+export async function describeImageFromURL(
+  url: string,
+  onProgress?: (progress: number, status: string) => void
+): Promise<string | null> {
+  if (!isBrowser) {
+    return null
+  }
+
+  try {
+    // Initialize model if not ready
+    if (!imageCaptionPipeline) {
+      await initializeImageCaption(onProgress)
+    }
+
+    if (!imageCaptionPipeline) {
+      return null
+    }
+
+    // The model can handle URLs directly
+    const result = await imageCaptionPipeline(url)
+    
+    if (result && result.length > 0 && result[0].generated_text) {
+      return result[0].generated_text
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error describing image from URL:', error)
+    return null
+  }
 }

@@ -3,12 +3,34 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/components/ThemeProvider'
-import { Loader2, Clipboard, Sparkles, Palette, Chrome, Sun, Moon, Check, Settings2, Shield } from 'lucide-react'
+import { Loader2, Clipboard, Sparkles, Palette, Chrome, Sun, Moon, Check, Shield, Crown, CreditCard, AlertCircle } from 'lucide-react'
+import { SubscriptionStatus } from '@/components/SubscriptionBadge'
+import { CheckoutButton } from '@/components/CheckoutButton'
 
 interface UserSettings {
   clipboard_monitoring: boolean
   auto_categorize: boolean
   theme: 'light' | 'dark' | 'system'
+}
+
+interface SubscriptionData {
+  tier: 'free' | 'pro'
+  isActive: boolean
+  subscriptionId: string | null
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+  limits: {
+    maxItems: number
+    maxBoards: number
+    hasExtensionAccess: boolean
+    hasAdvancedAI: boolean
+    hasPrioritySupport: boolean
+    hasExportData: boolean
+  }
+  usage: {
+    items: number
+    boards: number
+  }
 }
 
 export default function SettingsPage() {
@@ -17,8 +39,10 @@ export default function SettingsPage() {
     auto_categorize: true,
     theme: 'light',
   })
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const supabase = createClient()
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -28,6 +52,7 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Load user settings
       const { data } = await supabase
         .from('user_settings')
         .select('*')
@@ -41,11 +66,59 @@ export default function SettingsPage() {
           theme: data.theme ?? 'light',
         })
       }
+
+      // Load subscription status
+      try {
+        const subResponse = await fetch('/api/subscription')
+        if (subResponse.ok) {
+          const subData = await subResponse.json()
+          setSubscription(subData)
+        }
+      } catch (error) {
+        console.error('Failed to load subscription:', error)
+      }
+
       setLoading(false)
     }
 
     loadSettings()
   }, [supabase])
+
+  async function handleCancelSubscription() {
+    if (!confirm('Are you sure you want to cancel your subscription? You will retain access until the end of your billing period.')) {
+      return
+    }
+
+    setCancelling(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancelAtPeriodEnd: true }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel subscription')
+      }
+
+      setMessage({ type: 'success', text: data.message })
+
+      // Refresh subscription status
+      const subResponse = await fetch('/api/subscription')
+      if (subResponse.ok) {
+        const subData = await subResponse.json()
+        setSubscription(subData)
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to cancel subscription' })
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -71,8 +144,8 @@ export default function SettingsPage() {
       setMessage({ type: 'success', text: 'Settings saved successfully' })
 
       // Notify extension about settings change via localStorage
-      localStorage.setItem('cognikeep_settings', JSON.stringify(settings))
-      window.postMessage({ type: 'COGNIKEEP_SETTINGS_UPDATE', settings }, '*')
+      localStorage.setItem('novamind_settings', JSON.stringify(settings))
+      window.postMessage({ type: 'NOVAMIND_SETTINGS_UPDATE', settings }, '*')
     }
     setSaving(false)
   }
@@ -93,8 +166,8 @@ export default function SettingsPage() {
       })
 
     // Notify extension
-    localStorage.setItem('cognikeep_settings', JSON.stringify(newSettings))
-    window.postMessage({ type: 'COGNIKEEP_SETTINGS_UPDATE', settings: newSettings }, '*')
+    localStorage.setItem('novamind_settings', JSON.stringify(newSettings))
+    window.postMessage({ type: 'NOVAMIND_SETTINGS_UPDATE', settings: newSettings }, '*')
   }
 
   if (loading) {
@@ -112,7 +185,7 @@ export default function SettingsPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-display-sm font-bold text-warm-900 dark:text-warm-50">Settings</h1>
-        <p className="text-warm-500 dark:text-warm-400 mt-1">Manage your CogniKeep preferences</p>
+        <p className="text-warm-500 dark:text-warm-400 mt-1">Manage your Novamind preferences</p>
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -120,13 +193,13 @@ export default function SettingsPage() {
         <SettingsSection
           icon={<Chrome className="h-5 w-5" />}
           title="Browser Extension"
-          description="Settings for the CogniKeep browser extension"
+          description="Settings for the Novamind browser extension"
           gradient="from-blue-500 to-blue-600"
         >
           <SettingRow
             icon={<Clipboard className="h-5 w-5 text-blue-500" />}
             title="Auto-save Clipboard"
-            description="Automatically save text when you copy (Cmd/Ctrl+C) in your browser. Requires the CogniKeep extension."
+            description="Automatically save text when you copy (Cmd/Ctrl+C) in your browser. Requires the Novamind extension."
             badge={settings.clipboard_monitoring ? 'Active' : 'Off'}
             badgeColor={settings.clipboard_monitoring ? 'green' : 'gray'}
           >
@@ -160,7 +233,7 @@ export default function SettingsPage() {
         <SettingsSection
           icon={<Palette className="h-5 w-5" />}
           title="Appearance"
-          description="Customize how CogniKeep looks"
+          description="Customize how Novamind looks"
           gradient="from-accent-500 to-accent-600"
         >
           <SettingRow
@@ -201,6 +274,113 @@ export default function SettingsPage() {
           </SettingRow>
         </SettingsSection>
 
+        {/* Subscription Section */}
+        <SettingsSection
+          icon={<Crown className="h-5 w-5" />}
+          title="Subscription"
+          description="Manage your plan and billing"
+          gradient="from-amber-500 to-amber-600"
+        >
+          {subscription ? (
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <SubscriptionStatus
+                    tier={subscription.tier}
+                    currentPeriodEnd={subscription.currentPeriodEnd}
+                    cancelAtPeriodEnd={subscription.cancelAtPeriodEnd}
+                  />
+                </div>
+                {subscription.tier === 'free' && (
+                  <CheckoutButton
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-all"
+                  >
+                    Upgrade to Pro
+                  </CheckoutButton>
+                )}
+              </div>
+
+              {/* Usage stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-warm-50 dark:bg-warm-800 rounded-xl">
+                  <div className="text-sm text-warm-500 dark:text-warm-400 mb-1">Items</div>
+                  <div className="text-lg font-semibold text-warm-900 dark:text-warm-50">
+                    {subscription.usage.items}
+                    {subscription.tier === 'free' && (
+                      <span className="text-warm-400 dark:text-warm-500 font-normal">
+                        {' '}/ {subscription.limits.maxItems}
+                      </span>
+                    )}
+                  </div>
+                  {subscription.tier === 'free' && (
+                    <div className="mt-2 h-2 bg-warm-200 dark:bg-warm-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, (subscription.usage.items / subscription.limits.maxItems) * 100)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="p-4 bg-warm-50 dark:bg-warm-800 rounded-xl">
+                  <div className="text-sm text-warm-500 dark:text-warm-400 mb-1">Boards</div>
+                  <div className="text-lg font-semibold text-warm-900 dark:text-warm-50">
+                    {subscription.usage.boards}
+                    {subscription.tier === 'free' && (
+                      <span className="text-warm-400 dark:text-warm-500 font-normal">
+                        {' '}/ {subscription.limits.maxBoards}
+                      </span>
+                    )}
+                  </div>
+                  {subscription.tier === 'free' && (
+                    <div className="mt-2 h-2 bg-warm-200 dark:bg-warm-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, (subscription.usage.boards / subscription.limits.maxBoards) * 100)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pro features list (for free users) */}
+              {subscription.tier === 'free' && (
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-100 dark:border-primary-800">
+                  <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400 font-medium mb-3">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Upgrade to Pro for:</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-primary-600 dark:text-primary-300">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4" /> Unlimited items & boards
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4" /> Browser extension access
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4" /> Priority support & data export
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {/* Cancel subscription (for pro users) */}
+              {subscription.tier === 'pro' && subscription.isActive && !subscription.cancelAtPeriodEnd && (
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelling}
+                  className="text-sm text-warm-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                >
+                  {cancelling ? 'Cancelling...' : 'Cancel subscription'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="p-5 flex items-center justify-center">
+              <Loader2 className="w-5 h-5 animate-spin text-warm-400" />
+            </div>
+          )}
+        </SettingsSection>
+
         {/* Privacy Section */}
         <SettingsSection
           icon={<Shield className="h-5 w-5" />}
@@ -216,7 +396,7 @@ export default function SettingsPage() {
               <div>
                 <h4 className="font-medium text-warm-900 dark:text-warm-50 mb-1">On-device AI Processing</h4>
                 <p className="text-sm text-warm-500 dark:text-warm-400">
-                  CogniKeep processes your content locally using AI that runs in your browser.
+                  Novamind processes your content locally using AI that runs in your browser.
                   Your data never leaves your device for categorization.
                 </p>
               </div>

@@ -18,7 +18,7 @@ export default async function DashboardLayout({
 
   return (
     <DashboardWrapper>
-      <div className="min-h-screen bg-warm-50">
+      <div className="min-h-screen bg-warm-50 dark:bg-warm-900">
         <Sidebar />
         <div className="lg:pl-72">
           <Header user={user} />

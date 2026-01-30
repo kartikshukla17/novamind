@@ -1,6 +1,6 @@
 {
-  "name": "CogniKeep",
-  "short_name": "CogniKeep",
+  "name": "Novamind",
+  "short_name": "Novamind",
   "description": "Your second brain - capture, store, and AI-categorize any content",
   "start_url": "/all",
   "display": "standalone",

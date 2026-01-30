@@ -51,14 +51,14 @@ export interface SyncStatus {
 }
 
 // Database class
-class CogniKeepDB extends Dexie {
+class NovamindDB extends Dexie {
   items!: Table<LocalItem, string>
   boards!: Table<LocalBoard, string>
   itemBoards!: Table<LocalItemBoard, [string, string]>
   syncQueue!: Table<{ id: string; table: string; action: 'create' | 'update' | 'delete'; data: unknown; created_at: string }, string>
 
   constructor() {
-    super('cognikeep')
+    super('novamind')
 
     this.version(1).stores({
       items: 'id, user_id, type, is_favorite, is_archived, created_at, updated_at, synced_at, *ai_tags, *custom_tags',
@@ -70,14 +70,14 @@ class CogniKeepDB extends Dexie {
 }
 
 // Singleton instance
-let db: CogniKeepDB | null = null
+let db: NovamindDB | null = null
 
 /**
  * Get database instance
  */
-export function getDB(): CogniKeepDB {
+export function getDB(): NovamindDB {
   if (!db) {
-    db = new CogniKeepDB()
+    db = new NovamindDB()
   }
   return db
 }
