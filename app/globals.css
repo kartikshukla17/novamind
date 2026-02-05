@@ -37,6 +37,12 @@ html.lenis, html.lenis body {
     --muted-foreground: 120 113 108;
     --border: 231 229 228;
     --ring: 99 102 241;
+
+    /* Safe area insets for mobile devices (notch, rounded corners) */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
   }
 
   * {
@@ -47,6 +53,12 @@ html.lenis, html.lenis body {
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
+
+    /* Support for safe areas on mobile devices */
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
   }
 
   /* Selection styling */
@@ -220,6 +232,40 @@ html.lenis, html.lenis body {
   /* Text balance for headings */
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Safe area padding utilities for mobile */
+  .safe-top {
+    padding-top: var(--safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: var(--safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: var(--safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: var(--safe-area-inset-right);
+  }
+
+  .safe-x {
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+  }
+
+  .safe-y {
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+  }
+
+  .safe-all {
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
   }
 }
 

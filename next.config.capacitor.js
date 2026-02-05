@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // For Capacitor builds, use static export
-  // Comment out 'output' for regular dev/production builds
-  // output: 'export',
+  // Static export for Capacitor
+  output: 'export',
 
   images: {
     remotePatterns: [
@@ -11,31 +10,10 @@ const nextConfig = {
         hostname: '**',
       },
     ],
-    // For static export, disable image optimization
-    // unoptimized: true,
+    // Disable image optimization for static export
+    unoptimized: true,
   },
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com https://cdn.jsdelivr.net",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: blob:",
-              "font-src 'self' data:",
-              "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
-              "connect-src 'self' data: blob: https://*.supabase.co https://*.razorpay.com https://api.razorpay.com wss://*.supabase.co https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-bridge.xethub.hf.co https://xethub.hf.co https://cdn.jsdelivr.net https://cdn.huggingface.co",
-              "worker-src 'self' blob:",
-            ].join('; '),
-          },
-        ],
-      },
-    ]
-  },
+  // Remove headers for static export (not supported)
   webpack: (config, { isServer }) => {
     // Handle Transformers.js: browser must use onnxruntime-web only (no Node backend)
     if (!isServer) {
@@ -71,6 +49,8 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@xenova/transformers'],
   },
+  // Ensure trailing slashes for static export
+  trailingSlash: true,
 }
 
 module.exports = nextConfig

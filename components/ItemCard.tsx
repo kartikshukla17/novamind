@@ -64,15 +64,25 @@ export function ItemCard({
 
   async function handleToggleFavorite(e: React.MouseEvent) {
     e.stopPropagation()
-    const { data } = await supabase
-      .from('items')
-      .update({ is_favorite: !item.is_favorite })
-      .eq('id', item.id)
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .update({ is_favorite: !item.is_favorite })
+        .eq('id', item.id)
+        .select()
+        .single()
 
-    if (data) {
-      onUpdate?.(data)
+      if (error) {
+        console.error('Error toggling favorite:', error)
+        throw error
+      }
+
+      if (data) {
+        onUpdate?.(data)
+      }
+    } catch (error) {
+      console.error('Failed to update favorite status:', error)
+      alert('Failed to update favorite status. Please try again.')
     }
   }
 
@@ -107,20 +117,18 @@ export function ItemCard({
     return (
       <div
         onClick={onClick}
-        className={`bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer ${
-          deleting ? 'opacity-50 pointer-events-none' : ''
-        } ${isSelected ? 'bg-primary-50 dark:bg-sky-900/30' : ''}`}
+        className={`bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer ${deleting ? 'opacity-50 pointer-events-none' : ''
+          } ${isSelected ? 'bg-primary-50 dark:bg-sky-900/30' : ''}`}
       >
         <div className="flex items-center gap-4 p-3">
           {/* Selection checkbox */}
           {selectionMode && (
             <button
               onClick={handleSelect}
-              className={`w-5 h-5 rounded border flex items-center justify-center ${
-                isSelected
+              className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected
                   ? 'bg-primary-600 dark:bg-sky-500 border-primary-600 dark:border-sky-500'
                   : 'border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500'
-              }`}
+                }`}
             >
               {isSelected && <Check className="h-3 w-3 text-white" />}
             </button>
@@ -129,9 +137,8 @@ export function ItemCard({
           {/* Favorite */}
           <button
             onClick={handleToggleFavorite}
-            className={`p-1 rounded ${
-              item.is_favorite ? 'text-yellow-500' : 'text-gray-300 hover:text-gray-400'
-            }`}
+            className={`p-1 rounded ${item.is_favorite ? 'text-yellow-500' : 'text-gray-300 hover:text-gray-400'
+              }`}
           >
             <Star className={`h-4 w-4 ${item.is_favorite ? 'fill-current' : ''}`} />
           </button>
@@ -232,20 +239,18 @@ export function ItemCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-warm-800 rounded-xl border border-warm-200 dark:border-warm-700 overflow-hidden hover:shadow-md dark:hover:shadow-warm-900/50 transition-all cursor-pointer animate-fade-in ${
-        deleting ? 'opacity-50 pointer-events-none' : ''
-      } ${isSelected ? 'ring-2 ring-primary-500' : ''}`}
+      className={`bg-white dark:bg-warm-800 rounded-xl border border-warm-200 dark:border-warm-700 overflow-hidden hover:shadow-md dark:hover:shadow-warm-900/50 transition-all cursor-pointer animate-fade-in ${deleting ? 'opacity-50 pointer-events-none' : ''
+        } ${isSelected ? 'ring-2 ring-primary-500' : ''}`}
     >
       {/* Selection indicator */}
       {selectionMode && (
         <div className="absolute top-2 left-2 z-10">
           <button
             onClick={handleSelect}
-            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-sm ${
-              isSelected
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-sm ${isSelected
                 ? 'bg-primary-600 dark:bg-sky-500 border-primary-600 dark:border-sky-500'
                 : 'bg-white dark:bg-slate-700 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500'
-            }`}
+              }`}
           >
             {isSelected && <Check className="h-4 w-4 text-white" />}
           </button>
@@ -255,11 +260,10 @@ export function ItemCard({
       {/* Favorite button */}
       <button
         onClick={handleToggleFavorite}
-        className={`absolute top-2 right-2 z-10 p-1.5 rounded-full shadow-sm ${
-          item.is_favorite
+        className={`absolute top-2 right-2 z-10 p-1.5 rounded-full shadow-sm ${item.is_favorite
             ? 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-500 dark:text-yellow-400'
             : 'bg-white/80 dark:bg-slate-800/80 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 opacity-0 group-hover:opacity-100'
-        }`}
+          }`}
       >
         <Star className={`h-4 w-4 ${item.is_favorite ? 'fill-current' : ''}`} />
       </button>

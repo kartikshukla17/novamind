@@ -82,14 +82,26 @@ export function ItemDetailsModal({ item, onClose, onUpdate, onDelete }: ItemDeta
     const newValue = !editedItem.is_favorite
     setEditedItem({ ...editedItem, is_favorite: newValue })
 
-    const { data } = await supabase
-      .from('items')
-      .update({ is_favorite: newValue })
-      .eq('id', item.id)
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .update({ is_favorite: newValue })
+        .eq('id', item.id)
+        .select()
+        .single()
 
-    if (data) onUpdate(data)
+      if (error) {
+        // Revert optimistic update
+        setEditedItem({ ...editedItem, is_favorite: !newValue })
+        console.error('Error toggling favorite:', error)
+        throw error
+      }
+
+      if (data) onUpdate(data)
+    } catch (error) {
+      console.error('Failed to update favorite status:', error)
+      alert('Failed to update favorite status. Please try again.')
+    }
   }
 
   async function handleDelete() {
@@ -144,11 +156,10 @@ export function ItemDetailsModal({ item, onClose, onUpdate, onDelete }: ItemDeta
           <div className="flex items-center gap-1">
             <button
               onClick={handleToggleFavorite}
-              className={`p-2 rounded-lg transition-colors ${
-                editedItem.is_favorite
+              className={`p-2 rounded-lg transition-colors ${editedItem.is_favorite
                   ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30'
                   : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-              }`}
+                }`}
               title={editedItem.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Star className={`h-5 w-5 ${editedItem.is_favorite ? 'fill-current' : ''}`} />
@@ -166,9 +177,8 @@ export function ItemDetailsModal({ item, onClose, onUpdate, onDelete }: ItemDeta
             </button>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className={`p-2 rounded-lg transition-colors ${
-                isEditing ? 'text-primary-600 dark:text-sky-400 bg-primary-50 dark:bg-sky-900/30' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-              }`}
+              className={`p-2 rounded-lg transition-colors ${isEditing ? 'text-primary-600 dark:text-sky-400 bg-primary-50 dark:bg-sky-900/30' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+                }`}
               title="Edit"
             >
               <Edit2 className="h-5 w-5" />

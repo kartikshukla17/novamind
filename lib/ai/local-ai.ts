@@ -346,7 +346,7 @@ export async function initializeImageCaption(
     // Using a small but effective model
     imageCaptionPipeline = await pipeline(
       'image-to-text',
-      'Xenova/vit-gpt2-image-captioning',
+      'tttarun/vision_transformer',
       {
         progress_callback: (data: { progress?: number; status?: string }) => {
           if (data.progress) {

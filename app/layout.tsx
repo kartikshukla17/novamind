@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { LenisProvider } from '@/components/LenisProvider'
 import { PWAInstaller } from '@/components/PWAInstaller'
+import { CapacitorProvider } from '@/components/CapacitorProvider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,6 +30,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  // Enable safe area insets for mobile devices
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -42,6 +45,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className={`${inter.className} antialiased bg-warm-50 text-warm-900`}>
+        <CapacitorProvider />
         <LenisProvider>
           {children}
         </LenisProvider>
