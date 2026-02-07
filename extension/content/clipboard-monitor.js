@@ -60,7 +60,10 @@ window.addEventListener('message', async (event) => {
 })
 
 // Also check localStorage for settings (fallback when content script loads on Novamind pages)
-if (window.location.hostname === 'localhost' && window.location.port === '3000') {
+const isNovamindDashboard = (window.location.hostname === 'localhost' && window.location.port === '3000') ||
+  window.location.hostname.endsWith('vercel.app') ||
+  window.location.hostname.endsWith('novamind.com')
+if (isNovamindDashboard) {
   try {
     const storedSettings = localStorage.getItem('novamind_settings')
     if (storedSettings) {

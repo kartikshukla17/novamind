@@ -12,14 +12,16 @@
   ],
   "host_permissions": [
     "http://localhost:3000/*",
-    "https://*.novamind.com/*"
+    "http://127.0.0.1:3000/*",
+    "https://*.novamind.com/*",
+    "https://*.vercel.app/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
   },
   "content_scripts": [
     {
-      "matches": ["http://localhost:3000/*"],
+      "matches": ["http://localhost:3000/*", "http://127.0.0.1:3000/*", "https://*.vercel.app/*", "https://*.novamind.com/*"],
       "js": ["content/content.js"]
     },
     {

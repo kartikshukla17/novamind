@@ -1,6 +1,4 @@
-// Novamind Extension Popup
-
-const API_BASE_URL = 'http://localhost:3000'
+// Novamind Extension Popup (API_BASE_URL from config.js)
 
 document.addEventListener('DOMContentLoaded', async () => {
   const loginPrompt = document.getElementById('login-prompt')
@@ -17,6 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnText = saveBtn.querySelector('.btn-text')
   const btnLoading = saveBtn.querySelector('.btn-loading')
   const message = document.getElementById('message')
+
+  // Set footer links from config
+  const base = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:3000'
+  document.getElementById('link-all').href = `${base}/all`
+  document.getElementById('link-settings').href = `${base}/settings`
 
   // Check authentication
   const { authToken } = await chrome.storage.local.get('authToken')

@@ -1,6 +1,6 @@
 // Novamind Chrome Extension - Background Service Worker
 
-const API_BASE_URL = 'http://localhost:3000'
+importScripts('../config.js')
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {

@@ -1,10 +1,16 @@
 // Novamind Content Script
 // Listens for auth token from the connect page
 
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://novamind.vercel.app'
+  // Add your custom domain here if different, e.g. 'https://app.novamind.com'
+]
+
 // Listen for messages from the page
 window.addEventListener('message', async (event) => {
-  // Only accept messages from the same origin
-  if (event.origin !== 'http://localhost:3000') return
+  if (!ALLOWED_ORIGINS.includes(event.origin)) return
 
   if (event.data.type === 'NOVAMIND_AUTH_TOKEN' && event.data.token) {
     // Store the token in extension storage
